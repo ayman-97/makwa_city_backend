@@ -6,6 +6,26 @@ from sqlalchemy.orm import sessionmaker, Session
 from models import Base, User, Order, Category, ItemPrice
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware # <--- 1. استدعاء المكتبة
+import os
+
+# --- إعداد اتصال قاعدة البيانات ---
+# هذا الكود يفحص: هل نحن على Render؟ إذا نعم، خذ الرابط منه. إذا لا، استخدم الملف المحلي.
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    # إصلاح صغير لرابط Render (يحتاج postgresql بدلاً من postgres)
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+if not DATABASE_URL:
+    # استخدام الملف المحلي كاحتياطي
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'drayclean.db')}"
+
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base.metadata.create_all(bind=engine)
+
+
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./drayclean.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
